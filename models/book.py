@@ -20,14 +20,15 @@ class Book(BaseModel):
     description: Optional[str]
     price_incl: Optional[float]
     price_excl: Optional[float]
-    availability: Optional[str]
+    is_available: bool
+    stock:int
     num_reviews: Optional[int]
     rating: Optional[int]
     image_url: Optional[HttpUrl]
     source_url: str
     raw_html: Optional[str]
     content_hash: Optional[str]
-    crawl_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    crawled_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
         validate_by_name = True
