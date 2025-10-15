@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from motor.motor_asyncio import AsyncIOMotorClient
 from .settings import settings
 from models.constants import CrawlerType, Words
+from models.book import Book
 from utils.logger import logger
 
 
@@ -148,20 +149,23 @@ async def crawl_books(crawler_type:CrawlerType):
                         "is_available": parsed.get("is_available"),
                         "stock": parsed.get("stock"),
                     })
-                    print("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
-                    logger.info("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
                     existing = await books.find_one({"upc": parsed.get("upc")})
                     if not existing:
+                        print("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
+                        logger.info("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
                         await books.insert_one(parsed)
                     else:
-                        if existing.get("content_hash") != parsed.get("content_hash"):
-                            await books.update_one({"_id": existing["_id"]}, {"$set": parsed})
+                        existing_book = Book(**existing)
+                        if existing_book.content_hash != parsed.get("content_hash"):
+                            print("Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
+                            logger.info("Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
+                            await books.update_one({"_id": existing_book._id}, {"$set": parsed})
                             await db.changes.insert_one({
                                 "type": "updated",
                                 "source_url": detail_url,
-                                "book_id": str(existing["_id"]),
+                                "book_id": existing_book._id,
                                 "updated_at": datetime.now(),
-                                "old_hash": existing.get("content_hash"),
+                                "old_hash": existing_book.content_hash,
                                 "new_hash": parsed["content_hash"],
                                 "data": parsed
                             })

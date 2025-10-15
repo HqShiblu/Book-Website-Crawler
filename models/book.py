@@ -9,7 +9,7 @@ class PyObjectId(str):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v):
+    def validate(cls, v, info=None):
         return str(v)
 
 class Book(BaseModel):
