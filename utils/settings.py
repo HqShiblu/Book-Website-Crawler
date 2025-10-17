@@ -7,7 +7,9 @@ class Settings(BaseSettings):
     MONGO_URI: str
     MONGO_DB: str
     CRAWL_URL: str
-
+    SCHEDULER_HOUR:int
+    SCHEDULER_MINUTE:int
+    
     class Config:
         env_file = str(Path(__file__).resolve().parent.parent / ".env")
         env_file_encoding = "utf-8"

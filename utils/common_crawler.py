@@ -109,6 +109,7 @@ async def crawl_books(crawler_type:CrawlerType):
     db = client[settings.MONGO_DB]
     books = db["books"]
     books.create_index("upc", unique=True)
+    books.create_index("source_url", unique=True)
 
     async with httpx.AsyncClient() as client:
         page_no = 1
@@ -125,7 +126,10 @@ async def crawl_books(crawler_type:CrawlerType):
         
         while True:
             try:
-                await db.page_log.update_one({}, {"$set": {"page_no": page_no}})
+                await db.page_log.update_one(
+                    {"page_no": {"$ne": page_no}},
+                    {"$set": {"page_no": page_no}}
+                )
                 url = f"{BASE}/catalogue/page-{page_no}.html"
                 html, http_status = await fetch_text(client, url)
                 if int(http_status)==404:
@@ -137,6 +141,9 @@ async def crawl_books(crawler_type:CrawlerType):
                 for a in items:
                     href = a.get("href")
                     detail_url = BASE +"/catalogue/"+ href
+                    existing = await books.find_one({"source_url": parsed.get("source_url")})
+                    if crawler_type==CrawlerType.Regular and existing:
+                        continue
                     detail_html, http_status = await fetch_text(client, detail_url)
                     if not detail_html:
                         continue
@@ -149,26 +156,48 @@ async def crawl_books(crawler_type:CrawlerType):
                         "is_available": parsed.get("is_available"),
                         "stock": parsed.get("stock"),
                     })
-                    existing = await books.find_one({"upc": parsed.get("upc")})
                     if not existing:
                         print("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
                         logger.info("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
-                        await books.insert_one(parsed)
+                        async with await client.start_session() as session:
+                            async with session.start_transaction():
+                                await books.insert_one(parsed)
+                                await db.changes.insert_one({
+                                    "type": 1,
+                                    "source_url": detail_url,
+                                    "updated_at": datetime.now(),
+                                    "data": parsed
+                                })
                     else:
                         existing_book = Book(**existing)
                         if existing_book.content_hash != parsed.get("content_hash"):
                             print("Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
                             logger.info("Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
-                            await books.update_one({"_id": existing_book._id}, {"$set": parsed})
-                            await db.changes.insert_one({
-                                "type": "updated",
-                                "source_url": detail_url,
-                                "book_id": existing_book._id,
-                                "updated_at": datetime.now(),
-                                "old_hash": existing_book.content_hash,
-                                "new_hash": parsed["content_hash"],
-                                "data": parsed
-                            })
+                            change_description = []
+                            if existing_book.price_incl!=parsed.get("price_incl"):
+                                change_description.append("Price (including tax)")
+                            if existing_book.price_excl!=parsed.get("price_excl"):
+                                change_description.append("Price (excludiing tax)")
+                            if existing_book.stock!=parsed.get("stock"):
+                                change_description.append("Stock")
+                            if existing_book.num_reviews!=parsed.get("num_reviews"):
+                                change_description.append("Number of Reviews")
+                            if existing_book.rating!=parsed.get("rating"):
+                                change_description.append("Rating")
+                            
+                            change_description = ", ".join(change_description)+ " changed"
+                            
+                            async with await client.start_session() as session:
+                                async with session.start_transaction():
+                                    await books.update_one({"_id": existing_book._id}, {"$set": parsed})
+                                    await db.changes.insert_one({
+                                        "type": 2,
+                                        "source_url": detail_url,
+                                        "book_id": existing_book._id,
+                                        "change_description":change_description,
+                                        "updated_at": datetime.now(),
+                                        "data": parsed
+                                    })
                 page_no += 1
             except Exception as e:
                 print(f"Error on crawling: {e}")
