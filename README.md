@@ -2,7 +2,7 @@
 This repository is a part of a task assigned by FilersKeepers which aims at crawling https://books.toscrape.com/ and scraping data to MongoDB, then run scheduler to check change status.
 
 ### Points to be noted-
-The log files have been added as a proof of crawler and scheduler run (as instructed).
+The log files have been added as a proof of crawler and scheduler run (as per instructions).
 
 
 ## Requirements
