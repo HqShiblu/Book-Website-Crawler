@@ -5,12 +5,13 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from .settings import settings
 from models.constants import CrawlerType, Words
 from models.book import Book
-from utils.logger import logger
+from utils.logger import get_logger
 
 
 BASE = settings.CRAWL_URL
 
-async def fetch_text(client: httpx.AsyncClient, url: str, timeout=20, retries=3) -> str:
+
+async def fetch_text(client: httpx.AsyncClient, url: str, timeout=20, retries=3, logger=None) -> str:
     last_status = 0
     for attempt in range(1, retries + 1):
         try:
@@ -19,11 +20,13 @@ async def fetch_text(client: httpx.AsyncClient, url: str, timeout=20, retries=3)
             return resp.text, last_status
         except httpx.HTTPStatusError as e:
             last_status = e.response.status_code
-            print(f"Attempt {attempt} failed for {url}: {e}")
-            logger.error(f"Attempt {attempt} failed for {url}: {e}")
+            log_message = f"Attempt {attempt} failed for {url}: {e}"
+            print(log_message)
+            logger.error(log_message)
         except Exception as e:
-            print(f"Attempt {attempt} failed for {url}: {e}")
-            logger.error(f"Attempt {attempt} failed for {url}: {e}")
+            log_message = f"Attempt {attempt} failed for {url}: {e}"
+            print(log_message)
+            logger.error(log_message)
     return None, last_status
 
 
@@ -105,8 +108,17 @@ def parse_book_page(html: str, source_url: str) -> dict:
 
 async def crawl_books(crawler_type:CrawlerType):
     
-    client = AsyncIOMotorClient(settings.MONGO_URI)
-    db = client[settings.MONGO_DB]
+    log_name = "crawler"
+    
+    if crawler_type!=CrawlerType.Regular:
+        log_name = "scheduler"
+    
+    log_name = log_name+"-"+datetime.now().strftime("%Y.%m.%d")+".log"
+    
+    logger = get_logger(__name__, log_name)
+    
+    mongo_client = AsyncIOMotorClient(settings.MONGO_URI)
+    db = mongo_client[settings.MONGO_DB]
     books = db["books"]
     books.create_index("upc", unique=True)
     books.create_index("source_url", unique=True)
@@ -121,8 +133,9 @@ async def crawl_books(crawler_type:CrawlerType):
         else:
             await db.page_log.insert_one({"page_no":page_no})
         
-        print(f"Started Crawling from {crawler_type.value}")
-        logger.info(f"Started Crawling from {crawler_type.value}")
+        log_message = f"Started Crawling from {crawler_type.value} at {datetime.now()}"
+        print(log_message)
+        logger.info(log_message)
         
         while True:
             try:
@@ -131,7 +144,7 @@ async def crawl_books(crawler_type:CrawlerType):
                     {"$set": {"page_no": page_no}}
                 )
                 url = f"{BASE}/catalogue/page-{page_no}.html"
-                html, http_status = await fetch_text(client, url)
+                html, http_status = await fetch_text(client, url, logger=logger)
                 if int(http_status)==404:
                     break
                 soup = BeautifulSoup(html, "lxml")
@@ -141,10 +154,10 @@ async def crawl_books(crawler_type:CrawlerType):
                 for a in items:
                     href = a.get("href")
                     detail_url = BASE +"/catalogue/"+ href
-                    existing = await books.find_one({"source_url": parsed.get("source_url")})
+                    existing = await books.find_one({"source_url": detail_url})
                     if crawler_type==CrawlerType.Regular and existing:
                         continue
-                    detail_html, http_status = await fetch_text(client, detail_url)
+                    detail_html, http_status = await fetch_text(client, detail_url, logger=logger)
                     if not detail_html:
                         continue
                     parsed = parse_book_page(detail_html, detail_url)
@@ -157,13 +170,15 @@ async def crawl_books(crawler_type:CrawlerType):
                         "stock": parsed.get("stock"),
                     })
                     if not existing:
-                        print("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
-                        logger.info("Saving Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
-                        async with await client.start_session() as session:
+                        log_message = "Added New Book:\n"+parsed.get("title")+", URL: "+parsed.get("source_url")
+                        print(log_message)
+                        logger.info(log_message)
+                        async with await mongo_client.start_session() as session:
                             async with session.start_transaction():
-                                await books.insert_one(parsed)
+                                new_book = await books.insert_one(parsed)
                                 await db.changes.insert_one({
                                     "type": 1,
+                                    "book_id": new_book.inserted_id,
                                     "source_url": detail_url,
                                     "updated_at": datetime.now(),
                                     "data": parsed
@@ -171,8 +186,7 @@ async def crawl_books(crawler_type:CrawlerType):
                     else:
                         existing_book = Book(**existing)
                         if existing_book.content_hash != parsed.get("content_hash"):
-                            print("Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
-                            logger.info("Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url"))
+                            
                             change_description = []
                             if existing_book.price_incl!=parsed.get("price_incl"):
                                 change_description.append("Price (including tax)")
@@ -187,7 +201,7 @@ async def crawl_books(crawler_type:CrawlerType):
                             
                             change_description = ", ".join(change_description)+ " changed"
                             
-                            async with await client.start_session() as session:
+                            async with await mongo_client.start_session() as session:
                                 async with session.start_transaction():
                                     await books.update_one({"_id": existing_book._id}, {"$set": parsed})
                                     await db.changes.insert_one({
@@ -198,12 +212,18 @@ async def crawl_books(crawler_type:CrawlerType):
                                         "updated_at": datetime.now(),
                                         "data": parsed
                                     })
+                            
+                            log_message = "Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url")
+                            print(log_message)
+                            logger.info(log_message)
                 page_no += 1
             except Exception as e:
-                print(f"Error on crawling: {e}")
-                logger.error(f"Error on crawling: {e}")
+                log_message = f"Error on crawling: {e}"
+                print(log_message)
+                logger.error(log_message)
         
-        print(f"Completed Crawling from {crawler_type.value}")
-        logger.info(f"Completed Crawling from {crawler_type.value}")
+        log_message = f"Completed Crawling from {crawler_type.value} at {datetime.now()}"
+        print(log_message)
+        logger.info(log_message)
         
         
