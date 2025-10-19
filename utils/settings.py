@@ -10,7 +10,11 @@ class Settings(BaseSettings):
     SCHEDULER_HOUR:int
     SCHEDULER_MINUTE:int
     GENERATE_CHANGE_REPORT:bool
-    
+    REDIS_URI:str
+    API_KEY:str
+    LIMITER_FREQUENCY:str
+    LIMITER_TIMING:str
+        
     class Config:
         env_file = str(Path(__file__).resolve().parent.parent / ".env")
         env_file_encoding = "utf-8"
