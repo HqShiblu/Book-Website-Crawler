@@ -1,0 +1,229 @@
+2025-10-19 14:19:24,984 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 14:19:24.984708
+
+2025-10-19 14:19:26,838 - INFO - utils.common_crawler:
+Updated Data for:
+A Light in the Attic, URL: https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+
+2025-10-19 14:19:26,838 - INFO - utils.common_crawler:
+Price (including tax), Stock, Number of Reviews changed
+
+2025-10-19 17:42:15,182 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:42:15.182135
+
+2025-10-19 17:42:17,033 - INFO - utils.common_crawler:
+Added New Book:
+A Light in the Attic, URL: https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+
+2025-10-19 17:42:17,339 - INFO - utils.common_crawler:
+Added New Book:
+Tipping the Velvet, URL: https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html
+
+2025-10-19 17:42:17,644 - INFO - utils.common_crawler:
+Added New Book:
+Soumission, URL: https://books.toscrape.com/catalogue/soumission_998/index.html
+
+2025-10-19 17:42:17,949 - INFO - utils.common_crawler:
+Added New Book:
+Sharp Objects, URL: https://books.toscrape.com/catalogue/sharp-objects_997/index.html
+
+2025-10-19 17:42:18,251 - INFO - utils.common_crawler:
+Added New Book:
+Sapiens: A Brief History of Humankind, URL: https://books.toscrape.com/catalogue/sapiens-a-brief-history-of-humankind_996/index.html
+
+2025-10-19 17:42:18,554 - INFO - utils.common_crawler:
+Added New Book:
+The Requiem Red, URL: https://books.toscrape.com/catalogue/the-requiem-red_995/index.html
+
+2025-10-19 17:52:02,092 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:52:02.091776
+
+2025-10-19 17:52:02,092 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 17:52:02.092290
+
+2025-10-19 17:52:02,092 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 17:57:10,151 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:57:10.151089
+
+2025-10-19 17:57:10,155 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 17:57:10.155750
+
+2025-10-19 17:57:10,156 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 17:57:25,571 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:57:25.571650
+
+2025-10-19 17:57:25,576 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 17:57:25.576737
+
+2025-10-19 17:57:25,577 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 17:58:00,306 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:58:00.306100
+
+2025-10-19 17:58:00,310 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 17:58:00.310569
+
+2025-10-19 17:58:00,311 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 17:58:41,134 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:58:41.134201
+
+2025-10-19 17:58:41,138 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 17:58:41.138723
+
+2025-10-19 17:58:41,139 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 17:59:10,076 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:59:10.075868
+
+2025-10-19 17:59:10,080 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 17:59:10.080245
+
+2025-10-19 17:59:10,080 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 17:59:44,771 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 17:59:44.771344
+
+2025-10-19 17:59:44,776 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 17:59:44.775937
+
+2025-10-19 17:59:44,776 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:00:24,760 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:00:24.759808
+
+2025-10-19 18:00:24,764 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:00:24.764000
+
+2025-10-19 18:00:24,764 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:00:57,038 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:00:57.037735
+
+2025-10-19 18:00:57,042 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:00:57.042009
+
+2025-10-19 18:00:57,042 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:00:57,064 - INFO - utils.common_crawler:
+Daily Change Report Generation for 19-10-2025 Complete
+
+2025-10-19 18:01:41,355 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:01:41.355267
+
+2025-10-19 18:01:41,359 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:01:41.359743
+
+2025-10-19 18:01:41,360 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:03:08,364 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:03:08.363800
+
+2025-10-19 18:03:08,369 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:03:08.368871
+
+2025-10-19 18:03:08,369 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:03:18,375 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:03:18.375677
+
+2025-10-19 18:03:18,380 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:03:18.380560
+
+2025-10-19 18:03:18,381 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:03:50,957 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:03:50.957675
+
+2025-10-19 18:03:50,962 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:03:50.962283
+
+2025-10-19 18:03:50,962 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:04:14,694 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:04:14.693776
+
+2025-10-19 18:04:14,698 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:04:14.698282
+
+2025-10-19 18:04:14,698 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:04:14,701 - INFO - utils.common_crawler:
+Daily Change Report Generation for 19-10-2025 Complete
+
+2025-10-19 18:06:40,546 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:06:40.546375
+
+2025-10-19 18:06:40,552 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:06:40.551952
+
+2025-10-19 18:06:40,552 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:06:40,555 - INFO - utils.common_crawler:
+Daily Change Report Generation for 19-10-2025 Complete
+
+2025-10-19 18:10:32,907 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:10:32.907501
+
+2025-10-19 18:10:32,912 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:10:32.911871
+
+2025-10-19 18:10:32,912 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:10:32,930 - INFO - utils.common_crawler:
+Daily Change Report Generation for 19-10-2025 Complete
+
+2025-10-19 18:10:44,397 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:10:44.397077
+
+2025-10-19 18:10:44,402 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:10:44.401938
+
+2025-10-19 18:10:44,402 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:10:44,406 - INFO - utils.common_crawler:
+Daily Change Report Generation for 19-10-2025 Complete
+
+2025-10-19 18:10:50,369 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:10:50.369140
+
+2025-10-19 18:10:50,373 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:10:50.373471
+
+2025-10-19 18:10:50,373 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:10:50,377 - INFO - utils.common_crawler:
+Daily Change Report Generation for 19-10-2025 Complete
+
+2025-10-19 18:11:40,551 - INFO - utils.common_crawler:
+Started Crawling from Scheduler Crawler at 2025-10-19 18:11:40.551563
+
+2025-10-19 18:11:40,556 - INFO - utils.common_crawler:
+Completed Crawling from Scheduler Crawler at 2025-10-19 18:11:40.556420
+
+2025-10-19 18:11:40,556 - INFO - utils.common_crawler:
+Generating Daily Change Report for 19-10-2025
+
+2025-10-19 18:11:40,561 - INFO - utils.common_crawler:
+Daily Change Report Generation for 19-10-2025 Complete
+

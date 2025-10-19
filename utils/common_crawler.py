@@ -1,6 +1,8 @@
 import re, json, hashlib, httpx
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 from bs4 import BeautifulSoup
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from .settings import settings
 from models.constants import CrawlerType, Words
@@ -122,6 +124,9 @@ async def crawl_books(crawler_type:CrawlerType):
     books = db["books"]
     books.create_index("upc", unique=True)
     books.create_index("source_url", unique=True)
+    
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
 
     async with httpx.AsyncClient() as client:
         page_no = 1
@@ -131,19 +136,23 @@ async def crawl_books(crawler_type:CrawlerType):
         if page_log:
             page_no = int(page_log.get("page_no"))
         else:
-            await db.page_log.insert_one({"page_no":page_no})
+            if crawler_type==CrawlerType.Regular:
+                await db.page_log.insert_one({"page_no":page_no})
         
         log_message = f"Started Crawling from {crawler_type.value} at {datetime.now()}"
         print(log_message)
         logger.info(log_message)
         
         while True:
+            break
             try:
-                await db.page_log.update_one(
-                    {"page_no": {"$ne": page_no}},
-                    {"$set": {"page_no": page_no}}
-                )
+                if crawler_type==CrawlerType.Regular:
+                    await db.page_log.update_one(
+                        {"page_no": {"$ne": page_no}},
+                        {"$set": {"page_no": page_no}}
+                    )
                 url = f"{BASE}/catalogue/page-{page_no}.html"
+                
                 html, http_status = await fetch_text(client, url, logger=logger)
                 if int(http_status)==404:
                     break
@@ -176,54 +185,129 @@ async def crawl_books(crawler_type:CrawlerType):
                         async with await mongo_client.start_session() as session:
                             async with session.start_transaction():
                                 new_book = await books.insert_one(parsed)
-                                await db.changes.insert_one({
-                                    "type": 1,
-                                    "book_id": new_book.inserted_id,
-                                    "source_url": detail_url,
-                                    "updated_at": datetime.now(),
-                                    "data": parsed
-                                })
+                                if crawler_type==CrawlerType.Scheduler:
+                                    await db.changes.insert_one({
+                                        "type": 1,
+                                        "book_id": new_book.inserted_id,
+                                        "source_url": detail_url,
+                                        "updated_at": datetime.now(),
+                                    })
                     else:
                         existing_book = Book(**existing)
                         if existing_book.content_hash != parsed.get("content_hash"):
-                            
+                            changes = {}
                             change_description = []
                             if existing_book.price_incl!=parsed.get("price_incl"):
                                 change_description.append("Price (including tax)")
+                                changes.update({
+                                    "previous_price_incl":existing_book.price_incl,
+                                    "current_price_incl":parsed.get("price_incl"),
+                                })
                             if existing_book.price_excl!=parsed.get("price_excl"):
-                                change_description.append("Price (excludiing tax)")
+                                change_description.append("Price (excluding tax)")
+                                changes.update({
+                                    "previous_price_excl":existing_book.price_excl,
+                                    "current_price_excl":parsed.get("price_excl"),
+                                })
                             if existing_book.stock!=parsed.get("stock"):
                                 change_description.append("Stock")
+                                changes.update({
+                                    "previous_stock":existing_book.stock,
+                                    "current_stock":parsed.get("stock"),
+                                })
                             if existing_book.num_reviews!=parsed.get("num_reviews"):
                                 change_description.append("Number of Reviews")
+                                changes.update({
+                                    "previous_num_reviews":existing_book.num_reviews,
+                                    "current_num_reviews":parsed.get("num_reviews"),
+                                })
                             if existing_book.rating!=parsed.get("rating"):
                                 change_description.append("Rating")
+                                changes.update({
+                                    "previous_rating":existing_book.rating,
+                                    "current_rating":parsed.get("rating"),
+                                })
                             
                             change_description = ", ".join(change_description)+ " changed"
                             
                             async with await mongo_client.start_session() as session:
                                 async with session.start_transaction():
-                                    await books.update_one({"_id": existing_book._id}, {"$set": parsed})
-                                    await db.changes.insert_one({
-                                        "type": 2,
-                                        "source_url": detail_url,
-                                        "book_id": existing_book._id,
-                                        "change_description":change_description,
-                                        "updated_at": datetime.now(),
-                                        "data": parsed
-                                    })
+                                    result = await books.update_one({"_id": ObjectId(existing_book.id)}, {"$set": parsed})
+                                    print("Match Count")
+                                    print(result.matched_count)
+                                    if result.matched_count>0:
+                                        await db.changes.insert_one({
+                                            "type": 2,
+                                            "book_id": existing_book.id,
+                                            "source_url": detail_url,
+                                            "updated_at": datetime.now(),
+                                            "change_description":change_description,
+                                            "changes":changes,
+                                        })
                             
                             log_message = "Updated Data for:\n"+parsed.get("title")+", URL: "+parsed.get("source_url")
                             print(log_message)
+                            print(change_description)
                             logger.info(log_message)
+                            logger.info(change_description)
                 page_no += 1
             except Exception as e:
                 log_message = f"Error on crawling: {e}"
                 print(log_message)
                 logger.error(log_message)
         
-        log_message = f"Completed Crawling from {crawler_type.value} at {datetime.now()}"
+    log_message = f"Completed Crawling from {crawler_type.value} at {datetime.now()}"
+    print(log_message)
+    logger.info(log_message)
+    
+    if crawler_type==CrawlerType.Scheduler and settings.GENERATE_CHANGE_REPORT:
+        log_message = f"Generating Daily Change Report for {today.strftime("%d-%m-%Y")}"
         print(log_message)
         logger.info(log_message)
         
+        batch_size = 100
+        report_file = f"Change-Log-{today.strftime("%Y.%m.%d")}.json"
+        report_file = Path(f"change_reports/{report_file}").resolve()    
+        report_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        first_one = True
+        last_id = None
+        
+        with open(report_file, "a", encoding="utf-8") as f:
+            f.write("[\n")
+        
+        while True:
+            query = {
+                "updated_at": {"$gte": today, "$lt": tomorrow}
+            }
+            
+            if last_id:
+                query["_id"] = {"$gt": ObjectId(last_id)}
+
+            cursor = db.changes.find(query).sort("_id", 1).limit(batch_size)
+            docs = await cursor.to_list(length=batch_size)
+            
+            if not docs:
+                break
+            
+            with open(report_file, "a", encoding="utf-8") as f:
+                for doc in docs:
+                    doc["_id"] = str(doc["_id"])
+                    doc["book_id"] = str(doc["book_id"])
+                    if "updated_at" in doc:
+                        doc["updated_at"] = doc["updated_at"].isoformat()
+                    if first_one:
+                        f.write(json.dumps(doc) + "\n")
+                        first_one = False
+                    else:
+                        f.write(","+json.dumps(doc) + "\n")
+            
+            last_id = str(docs[-1]["_id"])
+        
+        with open(report_file, "a", encoding="utf-8") as f:
+            f.write("]")
+        
+        log_message = f"Daily Change Report Generation for {today.strftime("%d-%m-%Y")} Complete"
+        print(log_message)
+        logger.info(log_message)
         

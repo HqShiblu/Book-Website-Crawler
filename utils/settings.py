@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     CRAWL_URL: str
     SCHEDULER_HOUR:int
     SCHEDULER_MINUTE:int
+    GENERATE_CHANGE_REPORT:bool
     
     class Config:
         env_file = str(Path(__file__).resolve().parent.parent / ".env")
