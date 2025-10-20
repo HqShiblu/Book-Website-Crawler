@@ -108,6 +108,13 @@ def parse_book_page(html: str, source_url: str) -> dict:
     }
     return data
 
+def get_file_name(today, page_no):
+    report_file = f"Change-Log-{today.strftime("%Y.%m.%d")}-{page_no}.json"
+    report_file = Path(f"change_reports/{report_file}").resolve()    
+    report_file.parent.mkdir(parents=True, exist_ok=True)
+    return report_file
+    
+
 async def crawl_books(crawler_type:CrawlerType):
     
     log_name = "crawler"
@@ -144,7 +151,6 @@ async def crawl_books(crawler_type:CrawlerType):
         logger.info(log_message)
         
         while True:
-            break
             try:
                 if crawler_type==CrawlerType.Regular:
                     await db.page_log.update_one(
@@ -265,16 +271,9 @@ async def crawl_books(crawler_type:CrawlerType):
         print(log_message)
         logger.info(log_message)
         
-        batch_size = 100
-        report_file = f"Change-Log-{today.strftime("%Y.%m.%d")}.json"
-        report_file = Path(f"change_reports/{report_file}").resolve()    
-        report_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        first_one = True
+        batch_size = 500
+        page_count = 1
         last_id = None
-        
-        with open(report_file, "a", encoding="utf-8") as f:
-            f.write("[\n")
         
         while True:
             query = {
@@ -283,31 +282,29 @@ async def crawl_books(crawler_type:CrawlerType):
             
             if last_id:
                 query["_id"] = {"$gt": ObjectId(last_id)}
-
+            
             cursor = db.changes.find(query).sort("_id", 1).limit(batch_size)
             docs = await cursor.to_list(length=batch_size)
-            
+                        
             if not docs:
                 break
             
+            report_file = get_file_name(today, page_count)
+                        
             with open(report_file, "a", encoding="utf-8") as f:
                 for doc in docs:
                     doc["_id"] = str(doc["_id"])
                     doc["book_id"] = str(doc["book_id"])
                     if "updated_at" in doc:
                         doc["updated_at"] = doc["updated_at"].isoformat()
-                    if first_one:
-                        f.write(json.dumps(doc) + "\n")
-                        first_one = False
-                    else:
-                        f.write(","+json.dumps(doc) + "\n")
+                f.write(json.dumps(docs))
             
             last_id = str(docs[-1]["_id"])
+            page_count += 1
         
-        with open(report_file, "a", encoding="utf-8") as f:
-            f.write("]")
         
         log_message = f"Daily Change Report Generation for {today.strftime("%d-%m-%Y")} Complete"
         print(log_message)
         logger.info(log_message)
+        
         

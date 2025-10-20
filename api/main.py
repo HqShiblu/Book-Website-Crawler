@@ -1,5 +1,8 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Security
+from fastapi.security.api_key import APIKeyHeader
+from fastapi.openapi.models import APIKey
+from fastapi.openapi.utils import get_openapi
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
@@ -7,9 +10,9 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from utils.settings import settings
 from utils.auth import check_api_key
-from models.book import Book
 from models.params import QueryParams
-from models.constants import Switch_Map
+from models.constants import Change_Status
+
 
 limiter = Limiter(
     key_func=get_remote_address,
@@ -21,6 +24,9 @@ app = FastAPI()
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
+API_KEY_NAME = settings.API_KEY_NAME
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
 mongo_client = AsyncIOMotorClient(settings.MONGO_URI)
 db = mongo_client[settings.MONGO_DB]
 
@@ -30,7 +36,7 @@ db = mongo_client[settings.MONGO_DB]
 async def get_books(
     request: Request,
     params: QueryParams = Depends(),
-    authorized: bool = Depends(check_api_key)):
+    authorized: bool = Security(check_api_key)):
     
     final_query = {}
     if params.category:
@@ -67,6 +73,8 @@ async def get_books(
     
     if len(sort)!=0:
         cursor = cursor.sort(sort)
+    else:
+        cursor = cursor.sort("crawled_at", -1)
         
     books = await cursor.to_list(length=params.page_size)
     
@@ -83,15 +91,15 @@ async def get_books(
 @limiter.limit(rate_limit)
 async def get_single_book(
     request: Request,
-    params: QueryParams = Depends(),
-    authorized: bool = Depends(check_api_key)):
+    book_id: str,
+    authorized: bool = Security(check_api_key)):
     
-    if not ObjectId.is_valid(params.book_id):
+    if not ObjectId.is_valid(book_id):
         raise HTTPException(status_code=400, detail="invalid id")
     
     projection = {"raw_html": 0, "crawled_at": 0, "content_hash": 0}
     
-    book = await db.books.find_one({"_id": ObjectId(params.book_id)}, projection=projection)
+    book = await db.books.find_one({"_id": ObjectId(book_id)}, projection=projection)
     
     if not book:
         raise HTTPException(status_code=404, detail="not found")
@@ -105,18 +113,45 @@ async def get_single_book(
 @limiter.limit(rate_limit)
 async def get_changes(
     request: Request,
-    params: QueryParams = Depends(),
-    authorized: bool = Depends(check_api_key)):
+    page:int=1,
+    page_size:int=20,
+    authorized: bool = Security(check_api_key)):
     
-    skip = (params.page - 1) * params.page_size
+    skip = (page - 1) * page_size
     
-    cursor = db.changes.find({}, projection={"_id":0, "data": 0}).sort("updated_at", -1).skip(skip).limit(params.page_size)
+    cursor = db.changes.find({}, projection={"_id":0, "data": 0}).sort("updated_at", -1).skip(skip).limit(page_size)
         
-    changes = await cursor.to_list(length=params.page_size)
+    changes = await cursor.to_list(length=page_size)
     
     for change in changes:
         change["book_id"] = str(change["book_id"])
+        change["type"] = str(Change_Status[change["type"]])
     
     total_count = await db.changes.count_documents({})
     
-    return {"total_count": total_count, "page": params.page, "changes": changes}
+    return {"total_count": total_count, "page": page, "changes": changes}
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Book Crawler API",
+        version="1.0.0",
+        description="Book Crawler API with rate limiting and API key auth",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "APIKeyHeader": {
+            "type": "apiKey",
+            "in": "header",
+            "name": API_KEY_NAME,
+        }
+    }
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            method["security"] = [{"APIKeyHeader": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     GENERATE_CHANGE_REPORT:bool
     REDIS_URI:str
     API_KEY:str
+    API_KEY_NAME:str
     LIMITER_FREQUENCY:str
     LIMITER_TIMING:str
         

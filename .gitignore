@@ -1,3 +1,4 @@
 .env
 *.pyc
 change_reports/
+.pytest_cache/
