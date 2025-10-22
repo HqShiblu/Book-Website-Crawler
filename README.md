@@ -1,5 +1,5 @@
 # Book Website Crawler.
-This repository is a part of a task assigned by FilersKeepers which aims at crawling https://books.toscrape.com and scraping data to MongoDB, then run scheduler to check change status. There is also an API to get books and changes' data.<br/><br/>
+This repository aims at crawling https://books.toscrape.com and scraping data to MongoDB, then run scheduler to check change status. There is also an API to get books and changes' data.<br/><br/>
 
 **This project has 4 parts-**
 - **Crawler**<br/>
@@ -18,10 +18,6 @@ The endpoints are protected with **API Key**.<br/>
 The API endpoints can be served with **uvicorn** or any other ASGI server.
 - **Tests**<br/>
 Uses **pytest** to test the API endpoints.
-
-### Points to be noted-
-The log files have been added only as a proof of crawler and scheduler run (as per instructions).
-
 
 ## Requirements
 - Python 3.11+

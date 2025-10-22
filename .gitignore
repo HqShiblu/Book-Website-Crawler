@@ -1,4 +1,5 @@
 .env
 *.pyc
+logs/
 change_reports/
 .pytest_cache/
